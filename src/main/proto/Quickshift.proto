@@ -2,18 +2,98 @@ syntax = "proto3";
 
 option csharp_namespace = "GrpcClient";
 option java_multiple_files = true;
-option java_package = "quickshift.grpc";
+option java_package = "quickshift.grpc.service";
 
 package org.grpc.service;
 
-service Greeter{
-  rpc SayHello (HelloRequest) returns (HelloReply);
+service Shift{
+      rpc AddSingleShift (NewShiftDTO) returns (ShiftDTO);
+      rpc GetSingleShiftById (Id) returns (ShiftDTO);
+      rpc GetAllShifts(Empty) returns (ShiftDTOList);
+      rpc GetManyShiftsAfterStartDate (DateTimeInMillis) returns (ShiftDTOList);
+      rpc GetManyShiftsByEmployee (Id) returns (ShiftDTOList);
+      rpc UpdateSingleShift (UpdateShiftDTO) returns (ShiftDTO);
+      rpc DeleteSingleShift (Id) returns (GenericTextMessage);
 }
 
-message HelloRequest {
-  string name = 1;
+service Employee{
+      rpc AddSingleEmployee (NewEmployeeDTO) returns (EmployeeDTO);
+      rpc GetSingleEmployeeById (Id) returns (EmployeeDTO);
+      rpc GetAllEmployees (Empty) returns (EmployeeDTOList);
+      rpc GetManyEmployeesByName (GenericTextMessage) returns (EmployeeDTOList);
+      rpc GetManyEmployeesByShiftType (GenericTextMessage) returns (EmployeeDTOList);
+      rpc UpdateSingleEmployee (ShiftDTO) returns (ShiftDTO);
+      rpc DeleteSingleEmployee (Id) returns (GenericTextMessage);
 }
 
-message HelloReply {
-  string message = 1;
+message Id {
+  sint64 Id = 1;
+}
+
+message GenericTextMessage {
+  string Text = 1;
+}
+
+message Empty{
+
+}
+
+message DateTimeInMillis{
+  sint64 DateTime = 1;
+}
+
+message ShiftDTO {
+  sint64 Id = 1;
+  sint64 StartDateTime = 2;
+  sint64 EndDateTime = 3;
+  string TypeOfShift = 4;
+  string ShiftStatus = 5;
+  string Description = 6;
+  string Location = 7;
+}
+
+message NewShiftDTO {
+  sint64 StartDateTime = 1;
+  sint64 EndDateTime = 2;
+  string TypeOfShift = 3;
+  string ShiftStatus = 4;
+  string Description = 5;
+  string Location = 6;
+}
+
+message UpdateShiftDTO {
+  sint64 Id = 1;
+  sint64 StartDateTime = 2;
+  sint64 EndDateTime = 3;
+  string TypeOfShift = 4;
+  string ShiftStatus = 5;
+  string Description = 6;
+  string Location = 7;
+  sint64 EmployeeId = 8;
+}
+
+message ShiftDTOList {
+  repeated ShiftDTO dtos = 1;
+}
+
+message EmployeeDTO {
+  sint64 Id = 1;
+  string FirstName = 2;
+  string LastName = 3;
+  uint32 WorkingNumber = 4;
+  string Email = 5;
+  string Password = 6;
+  ShiftDTOList AssignedShifts = 7;
+}
+
+message NewEmployeeDTO {
+  string FirstName = 1;
+  string LastName = 2;
+  uint32 WorkingNumber = 3;
+  string Email = 4;
+  string Password = 5;
+}
+
+message EmployeeDTOList {
+  repeated EmployeeDTO dtos = 1;
 }
