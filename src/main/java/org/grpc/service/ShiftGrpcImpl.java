@@ -6,12 +6,12 @@ import org.grpc.service.entities.Shift;
 import org.grpc.service.repositories.EmployeeRepository;
 import org.grpc.service.repositories.ShiftRepository;
 import quickshift.grpc.service.*;
+import quickshift.grpc.service.Boolean;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     private ShiftRepository shiftRepository;
@@ -34,6 +34,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
                         request.getLocation()));
 
         ShiftDTO shiftDTO = convertShiftToShiftDTO(addedShift);
+        System.out.println(addedShift.getId());
         responseObserver.onNext(shiftDTO);
         responseObserver.onCompleted();
     }
@@ -52,7 +53,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
 
     @Override
     public void getAllShifts(Empty request, StreamObserver<ShiftDTOList> responseObserver) {
-        ArrayList<Shift> allShifts = shiftRepository.getAll();
+        ArrayList<Shift> allShifts = shiftRepository.findAll();
         ArrayList<ShiftDTO> shiftDTOS = new ArrayList<>();
         allShifts.forEach((shift -> shiftDTOS.add(convertShiftToShiftDTO(shift))));
         ShiftDTOList shiftDTOList = ShiftDTOList.newBuilder().addAllDtos(shiftDTOS).build();
@@ -62,7 +63,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
 
     @Override
     public void getManyShiftsAfterStartDate(DateTimeInMillis request, StreamObserver<ShiftDTOList> responseObserver) {
-        ArrayList<Shift> allShifts = shiftRepository.getAll();
+        ArrayList<Shift> allShifts = shiftRepository.findAll();
         ArrayList<ShiftDTO> shiftDTOS = new ArrayList<>();
 
         allShifts.forEach((shift) -> {
@@ -83,12 +84,10 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             return;
         }
 
-        ArrayList<Shift> shiftsByEmployee = shiftRepository.findAllByAssignedEmployeeId(request.getId());
+        ArrayList<Shift> shiftsByEmployee = shiftRepository.findAllByEmployeeId(request.getId());
         ArrayList<ShiftDTO> shiftDTOS = new ArrayList<>();
 
-        shiftsByEmployee.forEach((shift) -> {
-            shiftDTOS.add(convertShiftToShiftDTO(shift));
-        });
+        shiftsByEmployee.forEach((shift) -> shiftDTOS.add(convertShiftToShiftDTO(shift)));
 
         ShiftDTOList shiftDTOList = ShiftDTOList.newBuilder().addAllDtos(shiftDTOS).build();
         responseObserver.onNext(shiftDTOList);
@@ -96,22 +95,65 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     }
 
     @Override
-    public void updateSingleShift(UpdateShiftDTO request, StreamObserver<ShiftDTO> responseObserver) {
-        Shift toUpdate = shiftRepository.findById(request.getId());
-        shiftRepository.delete(toUpdate);
-        Employee newEmployee = employeeRepository.findById(request.getEmployeeId());
-        if(newEmployee == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Could not find the given employee"));
-            return;
-        }
-        shiftRepository.save(convertUpdateShiftDTOToShift(request, newEmployee));
+    public void updateSingleShift(ShiftDTO request, StreamObserver<ShiftDTO> responseObserver) {
+
+        Shift shiftToUpdate = shiftRepository.findById(request.getId());
+        shiftToUpdate.setStartDateTime(convertEpochMillisToLDT(request.getStartDateTime()));
+        shiftToUpdate.setEndDateTime(convertEpochMillisToLDT(request.getEndDateTime()));
+        shiftToUpdate.setTypeOfShift(request.getTypeOfShift());
+        shiftToUpdate.setShiftStatus(request.getShiftStatus());
+        shiftToUpdate.setDescription(request.getDescription());
+        shiftToUpdate.setLocation(request.getLocation());
+        Shift shiftToSendBack = shiftRepository.save(shiftToUpdate);
+
+        responseObserver.onNext(convertShiftToShiftDTO(shiftToSendBack));
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteSingleShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         Shift toDelete = shiftRepository.findById(request.getId());
         shiftRepository.delete(toDelete);
-        responseObserver.onNext(GenericTextMessage.newBuilder().setText("Shift deleted successfully").build());
+        responseObserver.onNext(GenericTextMessage.newBuilder().setText("Shift deleted successfully.").build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void isShiftInRepository(Id request, StreamObserver<Boolean> responseObserver){
+        if(shiftRepository.findById(request.getId()) == null){
+            responseObserver.onNext(Boolean.newBuilder().setResult(false).build());
+        }
+        else{
+            responseObserver.onNext(Boolean.newBuilder().setResult(true).build());
+        }
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void assignEmployeeToShift(ShiftEmployeePair request, StreamObserver<GenericTextMessage> responseObserver) {
+        Shift shift = shiftRepository.findById(request.getShiftId());
+        Employee employee = employeeRepository.findById(request.getShiftId());
+        if(employee == null || shift == null){
+            responseObserver.onError(new IndexOutOfBoundsException("Shift or Employee with that Id not found."));
+            return;
+        }
+        shift.setEmployee(employee);
+        shiftRepository.save(shift);
+        responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee assigned successfully.").build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void unAssignEmployeeFromShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
+        Shift shift = shiftRepository.findById(request.getId());
+        if(shift == null){
+            responseObserver.onError(new IndexOutOfBoundsException("Shift or Employee with that Id not found."));
+            return;
+        }
+        shift.setEmployee(null);
+        shiftRepository.save(shift);
+        responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee un-assigned successfully.").build());
+        responseObserver.onCompleted();
     }
 
     private static ShiftDTO convertShiftToShiftDTO(Shift shift){
@@ -127,19 +169,6 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
         builder.setLocation(shift.getLocation());
 
         return builder.build();
-    }
-
-    private static Shift convertUpdateShiftDTOToShift(UpdateShiftDTO shiftDTO, Employee employee){
-        return new Shift(
-                shiftDTO.getId(),
-                convertEpochMillisToLDT(shiftDTO.getStartDateTime()),
-                convertEpochMillisToLDT(shiftDTO.getEndDateTime()),
-                shiftDTO.getTypeOfShift(),
-                shiftDTO.getShiftStatus(),
-                shiftDTO.getDescription(),
-                shiftDTO.getLocation(),
-                employee
-        );
     }
 
     private static LocalDateTime convertEpochMillisToLDT(long epochMillis){

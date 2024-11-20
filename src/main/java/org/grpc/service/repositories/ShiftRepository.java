@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 public interface ShiftRepository extends CrudRepository<Shift, Long> {
     Shift findById(long id);
-    ArrayList<Shift> getAll();
-    Shift findByAssignedEmployeeId(long assignedEmployee_id);
-    ArrayList<Shift> findAllByAssignedEmployeeId(long assignedEmployee_id);
+    ArrayList<Shift> findAll();
+    ArrayList<Shift> findAllByEmployeeId(long assignedEmployee_id);
 }

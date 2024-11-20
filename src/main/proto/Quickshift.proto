@@ -12,8 +12,11 @@ service Shift{
       rpc GetAllShifts(Empty) returns (ShiftDTOList);
       rpc GetManyShiftsAfterStartDate (DateTimeInMillis) returns (ShiftDTOList);
       rpc GetManyShiftsByEmployee (Id) returns (ShiftDTOList);
-      rpc UpdateSingleShift (UpdateShiftDTO) returns (ShiftDTO);
+      rpc UpdateSingleShift (ShiftDTO) returns (ShiftDTO);
       rpc DeleteSingleShift (Id) returns (GenericTextMessage);
+      rpc IsShiftInRepository (Id) returns (Boolean);
+      rpc AssignEmployeeToShift (ShiftEmployeePair) returns (GenericTextMessage);
+      rpc UnAssignEmployeeFromShift (Id) returns (GenericTextMessage);
 }
 
 service Employee{
@@ -21,9 +24,9 @@ service Employee{
       rpc GetSingleEmployeeById (Id) returns (EmployeeDTO);
       rpc GetAllEmployees (Empty) returns (EmployeeDTOList);
       rpc GetManyEmployeesByName (GenericTextMessage) returns (EmployeeDTOList);
-      rpc GetManyEmployeesByShiftType (GenericTextMessage) returns (EmployeeDTOList);
-      rpc UpdateSingleEmployee (ShiftDTO) returns (ShiftDTO);
+      rpc UpdateSingleEmployee (UpdateEmployeeDTO) returns (EmployeeDTO);
       rpc DeleteSingleEmployee (Id) returns (GenericTextMessage);
+      rpc IsEmployeeInRepository (Id) returns (Boolean);
 }
 
 message Id {
@@ -36,6 +39,10 @@ message GenericTextMessage {
 
 message Empty{
 
+}
+
+message Boolean{
+  bool result = 1;
 }
 
 message DateTimeInMillis{
@@ -61,15 +68,9 @@ message NewShiftDTO {
   string Location = 6;
 }
 
-message UpdateShiftDTO {
-  sint64 Id = 1;
-  sint64 StartDateTime = 2;
-  sint64 EndDateTime = 3;
-  string TypeOfShift = 4;
-  string ShiftStatus = 5;
-  string Description = 6;
-  string Location = 7;
-  sint64 EmployeeId = 8;
+message ShiftEmployeePair {
+  sint64 ShiftId = 1;
+  sint64 EmployeeId = 2;
 }
 
 message ShiftDTOList {
@@ -92,6 +93,15 @@ message NewEmployeeDTO {
   uint32 WorkingNumber = 3;
   string Email = 4;
   string Password = 5;
+}
+
+message UpdateEmployeeDTO {
+  sint64 Id = 1;
+  string FirstName = 2;
+  string LastName = 3;
+  uint32 WorkingNumber = 4;
+  string Email = 5;
+  string Password = 6;
 }
 
 message EmployeeDTOList {

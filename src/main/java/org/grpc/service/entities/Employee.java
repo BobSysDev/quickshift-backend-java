@@ -3,9 +3,6 @@ package org.grpc.service.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 @Entity
 @Getter
 @Setter
@@ -23,25 +20,12 @@ public class Employee {
     private String email;
     private String password;
 
-    @OneToMany(mappedBy = "employee")
-    private HashSet<Shift> assignedShifts = new HashSet<>();
-
-    public Employee(long id, String firstName, String lastName, int workingNumber, String email, String password, HashSet<Shift> assignedShifts) {
+    public Employee(long id, String firstName, String lastName, int workingNumber, String email, String password) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.workingNumber = workingNumber;
         this.email = email;
-        this.assignedShifts = assignedShifts;
-        this.password = password;
-    }
-
-    public Employee(String firstName, String lastName, int workingNumber, String email, String password, HashSet<Shift> assignedShifts) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.workingNumber = workingNumber;
-        this.email = email;
-        this.assignedShifts = assignedShifts;
         this.password = password;
     }
 
@@ -51,6 +35,5 @@ public class Employee {
         this.workingNumber = workingNumber;
         this.email = email;
         this.password = password;
-        this.assignedShifts = new HashSet<>();
     }
 }

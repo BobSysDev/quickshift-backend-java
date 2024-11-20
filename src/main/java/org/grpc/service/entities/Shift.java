@@ -26,19 +26,19 @@ public class Shift implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee assignedEmployee;
+    private Employee employee;
 
-    public Shift(LocalDateTime StartDateTime, LocalDateTime EndDateTime, String TypeOfShift, String ShiftStatus, String Description, String Location, Employee assignedEmployee) {
+    public Shift(LocalDateTime StartDateTime, LocalDateTime EndDateTime, String TypeOfShift, String ShiftStatus, String Description, String Location, Employee employee) {
         this.startDateTime = StartDateTime;
         this.endDateTime = EndDateTime;
         this.typeOfShift = TypeOfShift;
         this.shiftStatus = ShiftStatus;
         this.description = Description;
         this.location = Location;
-        this.assignedEmployee = assignedEmployee;
+        this.employee = employee;
     }
 
-    public Shift(long id, LocalDateTime StartDateTime, LocalDateTime EndDateTime, String TypeOfShift, String ShiftStatus, String Description, String Location, Employee assignedEmployee) {
+    public Shift(long id, LocalDateTime StartDateTime, LocalDateTime EndDateTime, String TypeOfShift, String ShiftStatus, String Description, String Location, Employee employee) {
         this.id = id;
         this.startDateTime = StartDateTime;
         this.endDateTime = EndDateTime;
@@ -46,7 +46,7 @@ public class Shift implements Serializable {
         this.shiftStatus = ShiftStatus;
         this.description = Description;
         this.location = Location;
-        this.assignedEmployee = assignedEmployee;
+        this.employee = employee;
     }
 
     public Shift(LocalDateTime StartDateTime, LocalDateTime EndDateTime, String TypeOfShift, String ShiftStatus, String Description, String Location) {
@@ -56,6 +56,6 @@ public class Shift implements Serializable {
         this.shiftStatus = ShiftStatus;
         this.description = Description;
         this.location = Location;
-        assignedEmployee = null;
+        employee = null;
     }
 }
