@@ -8,4 +8,6 @@ public interface EmployeeRepository extends CrudRepository<Employee, Long>{
     Employee findById(long id);
     List<Employee> findAll();
     List<Employee> findEmployeesByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName);
+    boolean existsEmployeeByWorkingNumber(int workingNumber);
+    Employee findByWorkingNumber(int workingNumber);
 }

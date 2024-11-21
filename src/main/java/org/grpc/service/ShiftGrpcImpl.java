@@ -1,5 +1,8 @@
 package org.grpc.service;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
+import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import org.grpc.service.entities.Employee;
 import org.grpc.service.entities.Shift;
@@ -43,7 +46,11 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     public void getSingleShiftById(Id request, StreamObserver<ShiftDTO> responseObserver) {
         Shift requestedShift = shiftRepository.findById(request.getId());
         if(requestedShift == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Employee with ID " + request.getId() + " not found."));
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("A shift with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
         ShiftDTO shiftDTO = convertShiftToShiftDTO(requestedShift);
@@ -80,7 +87,11 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     @Override
     public void getManyShiftsByEmployee(Id request, StreamObserver<ShiftDTOList> responseObserver) {
         if(employeeRepository.findById(request.getId()) == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Employee with this Id not found"));
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
 
@@ -96,8 +107,16 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
 
     @Override
     public void updateSingleShift(ShiftDTO request, StreamObserver<ShiftDTO> responseObserver) {
-
         Shift shiftToUpdate = shiftRepository.findById(request.getId());
+        if(shiftToUpdate == null){
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("A shift with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         shiftToUpdate.setStartDateTime(convertEpochMillisToLDT(request.getStartDateTime()));
         shiftToUpdate.setEndDateTime(convertEpochMillisToLDT(request.getEndDateTime()));
         shiftToUpdate.setTypeOfShift(request.getTypeOfShift());
@@ -112,6 +131,14 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
 
     @Override
     public void deleteSingleShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
+        if (shiftRepository.findById(request.getId()) == null) {
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An shift with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
         Shift toDelete = shiftRepository.findById(request.getId());
         shiftRepository.delete(toDelete);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Shift deleted successfully.").build());
@@ -134,7 +161,11 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
         Shift shift = shiftRepository.findById(request.getShiftId());
         Employee employee = employeeRepository.findById(request.getShiftId());
         if(employee == null || shift == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Shift or Employee with that Id not found."));
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("Shift or Employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
         shift.setEmployee(employee);
@@ -147,7 +178,11 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     public void unAssignEmployeeFromShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         Shift shift = shiftRepository.findById(request.getId());
         if(shift == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Shift or Employee with that Id not found."));
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An shift with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
         shift.setEmployee(null);

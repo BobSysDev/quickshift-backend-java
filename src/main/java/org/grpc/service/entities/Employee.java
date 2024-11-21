@@ -16,6 +16,7 @@ public class Employee {
 
     private String firstName;
     private String lastName;
+    @Column(unique = true)
     private int workingNumber;
     private String email;
     private String password;

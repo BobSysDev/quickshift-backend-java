@@ -7,26 +7,27 @@ option java_package = "quickshift.grpc.service";
 package org.grpc.service;
 
 service Shift{
-      rpc AddSingleShift (NewShiftDTO) returns (ShiftDTO);
-      rpc GetSingleShiftById (Id) returns (ShiftDTO);
-      rpc GetAllShifts(Empty) returns (ShiftDTOList);
-      rpc GetManyShiftsAfterStartDate (DateTimeInMillis) returns (ShiftDTOList);
-      rpc GetManyShiftsByEmployee (Id) returns (ShiftDTOList);
-      rpc UpdateSingleShift (ShiftDTO) returns (ShiftDTO);
-      rpc DeleteSingleShift (Id) returns (GenericTextMessage);
-      rpc IsShiftInRepository (Id) returns (Boolean);
-      rpc AssignEmployeeToShift (ShiftEmployeePair) returns (GenericTextMessage);
-      rpc UnAssignEmployeeFromShift (Id) returns (GenericTextMessage);
+  rpc AddSingleShift (NewShiftDTO) returns (ShiftDTO);
+  rpc GetSingleShiftById (Id) returns (ShiftDTO); //Throws NOT_FOUND if shift with this ID was not found
+  rpc GetAllShifts(Empty) returns (ShiftDTOList);
+  rpc GetManyShiftsAfterStartDate (DateTimeInMillis) returns (ShiftDTOList);
+  rpc GetManyShiftsByEmployee (Id) returns (ShiftDTOList); //Throws NOT_FOUND if employee with this ID not found
+  rpc UpdateSingleShift (ShiftDTO) returns (ShiftDTO); //Throws NOT_FOUND if shift with this ID not found
+  rpc DeleteSingleShift (Id) returns (GenericTextMessage); //Throws NOT_FOUND if shift with was this ID not found
+  rpc IsShiftInRepository (Id) returns (Boolean);
+  rpc AssignEmployeeToShift (ShiftEmployeePair) returns (GenericTextMessage); // Throws NOT_FOUND if employee or shift with the given IDs were not found
+  rpc UnAssignEmployeeFromShift (Id) returns (GenericTextMessage); // Throws NOT_FOUND if shift with this ID was not found
 }
 
 service Employee{
-      rpc AddSingleEmployee (NewEmployeeDTO) returns (EmployeeDTO);
-      rpc GetSingleEmployeeById (Id) returns (EmployeeDTO);
-      rpc GetAllEmployees (Empty) returns (EmployeeDTOList);
-      rpc GetManyEmployeesByName (GenericTextMessage) returns (EmployeeDTOList);
-      rpc UpdateSingleEmployee (UpdateEmployeeDTO) returns (EmployeeDTO);
-      rpc DeleteSingleEmployee (Id) returns (GenericTextMessage);
-      rpc IsEmployeeInRepository (Id) returns (Boolean);
+  rpc AddSingleEmployee (NewEmployeeDTO) returns (EmployeeDTO); //Throws ALREADY_EXISTS if it detects a duplicate working number
+  rpc GetSingleEmployeeById (Id) returns (EmployeeDTO); //Throws NOT_FOUND if employee with this ID was not found
+  rpc GetAllEmployees (Empty) returns (EmployeeDTOList);
+  rpc GetManyEmployeesByName (GenericTextMessage) returns (EmployeeDTOList);
+  rpc UpdateSingleEmployee (UpdateEmployeeDTO) returns (EmployeeDTO); //Throws NOT_FOUND if employee with this it was not found, or ALREADY_EXISTS if the new working number collides with another employee
+  rpc DeleteSingleEmployee (Id) returns (GenericTextMessage); //Throws NOT_FOUND if employee with this ID was not found
+  rpc IsEmployeeInRepository (Id) returns (Boolean);
+  rpc GetSingleEmployeeByWorkingNumber (WorkingNumber) returns (EmployeeDTO); //Throws NOT_FOUND if employee with this Employee Number was not found
 }
 
 message Id {
@@ -47,6 +48,10 @@ message Boolean{
 
 message DateTimeInMillis{
   sint64 DateTime = 1;
+}
+
+message WorkingNumber{
+  uint32 WorkingNumber = 1;
 }
 
 message ShiftDTO {

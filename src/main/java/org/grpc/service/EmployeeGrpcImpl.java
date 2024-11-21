@@ -1,5 +1,8 @@
 package org.grpc.service;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
+import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import org.grpc.service.entities.Employee;
 import org.grpc.service.entities.Shift;
@@ -24,7 +27,16 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     }
 
     @Override
-    public void addSingleEmployee(NewEmployeeDTO request, StreamObserver<EmployeeDTO> responseObserver){
+    public void addSingleEmployee(NewEmployeeDTO request, StreamObserver<EmployeeDTO> responseObserver) {
+        if (employeeRepository.existsEmployeeByWorkingNumber(request.getWorkingNumber())) {
+            Status status = Status.newBuilder()
+                    .setCode(Code.ALREADY_EXISTS_VALUE)
+                    .setMessage("An employee with this working number already exists!")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         Employee newEmployee = new Employee(
                 request.getFirstName(),
                 request.getLastName(),
@@ -40,8 +52,12 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     @Override
     public void getSingleEmployeeById(Id request, StreamObserver<EmployeeDTO> responseObserver) {
         Employee employee = employeeRepository.findById(request.getId());
-        if(employee == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Employee with this Id not found"));
+        if (employee == null) {
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
         responseObserver.onNext(convertEmployeeToEmployeeDTO(employee, shiftRepository));
@@ -72,6 +88,22 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     @Override
     public void updateSingleEmployee(UpdateEmployeeDTO request, StreamObserver<EmployeeDTO> responseObserver) {
         Employee employeeToUpdate = employeeRepository.findById(request.getId());
+        if(employeeToUpdate == null){
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+        if(employeeToUpdate.getWorkingNumber() != request.getWorkingNumber() && employeeRepository.existsEmployeeByWorkingNumber(request.getWorkingNumber())){
+            Status status = Status.newBuilder()
+                    .setCode(Code.ALREADY_EXISTS_VALUE)
+                    .setMessage("Another employee already has this working number!")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
         employeeToUpdate.setFirstName(request.getFirstName());
         employeeToUpdate.setLastName(request.getLastName());
         employeeToUpdate.setWorkingNumber(request.getWorkingNumber());
@@ -87,8 +119,12 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
 
     @Override
     public void deleteSingleEmployee(Id request, StreamObserver<GenericTextMessage> responseObserver) {
-        if(employeeRepository.findById(request.getId()) == null){
-            responseObserver.onError(new IndexOutOfBoundsException("Employee with that ID not found."));
+        if (employeeRepository.findById(request.getId()) == null) {
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
         employeeRepository.deleteById(request.getId());
@@ -98,16 +134,31 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
 
     @Override
     public void isEmployeeInRepository(Id request, StreamObserver<Boolean> responseObserver) {
-        if(employeeRepository.findById(request.getId()) == null){
+        if (employeeRepository.findById(request.getId()) == null) {
             responseObserver.onNext(Boolean.newBuilder().setResult(false).build());
-        }
-        else{
+        } else {
             responseObserver.onNext(Boolean.newBuilder().setResult(true).build());
         }
         responseObserver.onCompleted();
     }
 
-    private static EmployeeDTO convertEmployeeToEmployeeDTO(Employee employee, ShiftRepository shiftRepository){
+    @Override
+    public void getSingleEmployeeByWorkingNumber(WorkingNumber request, StreamObserver<EmployeeDTO> responseObserver) {
+        Employee employee = employeeRepository.findByWorkingNumber(request.getWorkingNumber());
+        if(employee == null){
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("An employee with this working number not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
+        responseObserver.onNext(convertEmployeeToEmployeeDTO(employee, shiftRepository));
+        responseObserver.onCompleted();
+    }
+
+    private static EmployeeDTO convertEmployeeToEmployeeDTO(Employee employee, ShiftRepository shiftRepository) {
         ArrayList<Shift> assignedShifts = shiftRepository.findAllByEmployeeId(employee.getId());
         List<ShiftDTO> shiftDTOs = new ArrayList<>();
 
@@ -126,7 +177,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         return builder.build();
     }
 
-    private static Employee convertEmployeeDTOToEmployee(EmployeeDTO employeeDTO, ShiftRepository shiftRepository){
+    private static Employee convertEmployeeDTOToEmployee(EmployeeDTO employeeDTO, ShiftRepository shiftRepository) {
         return new Employee(
                 employeeDTO.getId(),
                 employeeDTO.getFirstName(),
@@ -137,7 +188,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         );
     }
 
-    private static ShiftDTO convertShiftToShiftDTO(Shift shift){
+    private static ShiftDTO convertShiftToShiftDTO(Shift shift) {
         ZoneId localTimeZone = ZoneId.systemDefault();
         ShiftDTO.Builder builder = ShiftDTO.newBuilder();
 
@@ -152,7 +203,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         return builder.build();
     }
 
-    private static LocalDateTime convertEpochMillisToLDT(long epochMillis){
+    private static LocalDateTime convertEpochMillisToLDT(long epochMillis) {
         Instant instant = Instant.ofEpochMilli(epochMillis);
         ZoneId localTimeZone = ZoneId.systemDefault();
         return instant.atZone(localTimeZone).toLocalDateTime();
