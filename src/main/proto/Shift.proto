@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcClient";
+option java_multiple_files = true;
+option java_package = "quickshift.grpc.service";
+
+package org.grpc.service;
+
+import "Generic.proto";
+
+service Shift{
+  rpc AddSingleShift (NewShiftDTO) returns (ShiftDTO);
+  rpc GetSingleShiftById (Id) returns (ShiftDTO); //Throws NOT_FOUND if shift with this ID was not found
+  rpc GetAllShifts(Empty) returns (ShiftDTOList);
+  rpc GetManyShiftsAfterStartDate (DateTimeInMillis) returns (ShiftDTOList);
+  rpc GetManyShiftsByEmployee (Id) returns (ShiftDTOList); //Throws NOT_FOUND if employee with this ID not found
+  rpc UpdateSingleShift (ShiftDTO) returns (ShiftDTO); //Throws NOT_FOUND if shift with this ID not found
+  rpc DeleteSingleShift (Id) returns (GenericTextMessage); //Throws NOT_FOUND if shift with was this ID not found
+  rpc IsShiftInRepository (Id) returns (Boolean);
+  rpc AssignEmployeeToShift (ShiftEmployeePair) returns (GenericTextMessage); // Throws NOT_FOUND if employee or shift with the given IDs were not found
+  rpc UnAssignEmployeeFromShift (Id) returns (GenericTextMessage); // Throws NOT_FOUND if shift with this ID was not found
+}
+
+message ShiftDTO {
+  sint64 Id = 1;
+  sint64 StartDateTime = 2;
+  sint64 EndDateTime = 3;
+  string TypeOfShift = 4;
+  string ShiftStatus = 5;
+  string Description = 6;
+  string Location = 7;
+}
+
+message NewShiftDTO {
+  sint64 StartDateTime = 1;
+  sint64 EndDateTime = 2;
+  string TypeOfShift = 3;
+  string ShiftStatus = 4;
+  string Description = 5;
+  string Location = 6;
+}
+
+message ShiftEmployeePair {
+  sint64 ShiftId = 1;
+  sint64 EmployeeId = 2;
+}
+
+message ShiftDTOList {
+  repeated ShiftDTO dtos = 1;
+}

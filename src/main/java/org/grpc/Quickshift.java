@@ -1,6 +1,7 @@
 package org.grpc;
 
 import io.grpc.ServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionService;
 import org.grpc.service.EmployeeGrpcImpl;
 import org.grpc.service.ShiftGrpcImpl;
 import org.grpc.service.repositories.EmployeeRepository;
@@ -12,12 +13,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import java.time.ZoneId;
-
-
 @SpringBootApplication
 public class Quickshift {
     private static final Logger log = LoggerFactory.getLogger(Quickshift.class);
+    private static final int serverPort = 50051;
 
     public static void main(String[] args) {
         SpringApplication.run(Quickshift.class, args);
@@ -27,15 +26,15 @@ public class Quickshift {
     public CommandLineRunner demo(ShiftRepository shiftRepository, EmployeeRepository employeeRepository){
         return (args) -> {
             io.grpc.Server server = ServerBuilder
-                    .forPort(50051)
+                    .forPort(serverPort)
                     .addService(new ShiftGrpcImpl(shiftRepository, employeeRepository))
                     .addService(new EmployeeGrpcImpl(shiftRepository, employeeRepository))
+                    .addService(ProtoReflectionService.newInstance())
                     .build();
             server.start();
-            System.out.println("Server running on port 50051");
+            log.info("Server running on port " + serverPort);
+            log.info("Full server address: gprc://localhost:" + serverPort);
             server.awaitTermination();
-
-            shiftRepository.findById(1).getStartDateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         };
     }
 

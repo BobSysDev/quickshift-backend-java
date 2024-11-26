@@ -17,8 +17,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 
 public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
-    private ShiftRepository shiftRepository;
-    private EmployeeRepository employeeRepository;
+    private final ShiftRepository shiftRepository;
+    private final EmployeeRepository employeeRepository;
 
     public ShiftGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
@@ -159,11 +159,19 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     @Override
     public void assignEmployeeToShift(ShiftEmployeePair request, StreamObserver<GenericTextMessage> responseObserver) {
         Shift shift = shiftRepository.findById(request.getShiftId());
-        Employee employee = employeeRepository.findById(request.getShiftId());
-        if(employee == null || shift == null){
+        Employee employee = employeeRepository.findById(request.getEmployeeId());
+        if(employee == null){
             Status status = Status.newBuilder()
                     .setCode(Code.NOT_FOUND_VALUE)
-                    .setMessage("Shift or Employee with this ID not found")
+                    .setMessage("Employee with this ID not found")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+        if(shift == null){
+            Status status = Status.newBuilder()
+                    .setCode(Code.NOT_FOUND_VALUE)
+                    .setMessage("Shift with this ID not found")
                     .build();
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
