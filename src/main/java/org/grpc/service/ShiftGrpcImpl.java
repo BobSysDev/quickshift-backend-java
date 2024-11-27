@@ -210,6 +210,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
         builder.setShiftStatus(shift.getShiftStatus());
         builder.setDescription(shift.getDescription());
         builder.setLocation(shift.getLocation());
+        builder.setAssignedEmployeeId(shift.getEmployee() == null?-1L:shift.getEmployee().getId());
 
         return builder.build();
     }
