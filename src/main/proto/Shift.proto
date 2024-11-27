@@ -29,6 +29,7 @@ message ShiftDTO {
   string ShiftStatus = 5;
   string Description = 6;
   string Location = 7;
+  sint64 AssignedEmployeeId = 8;
 }
 
 message NewShiftDTO {
