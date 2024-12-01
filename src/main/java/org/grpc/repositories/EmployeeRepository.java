@@ -1,5 +1,5 @@
-package org.grpc.service.repositories;
-import org.grpc.service.entities.Employee;
+package org.grpc.repositories;
+import org.grpc.entities.Employee;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;

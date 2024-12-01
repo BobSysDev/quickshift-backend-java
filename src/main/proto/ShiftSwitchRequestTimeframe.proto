@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcClient";
+option java_multiple_files = true;
+option java_package = "quickshift.grpc.service";
+
+package org.grpc.service;
+
+import "Generic.proto";
+
+service ShiftSwitchRequestTimeframe {
+  rpc AddTimeframe (NewTimeframeDTO) returns (TimeframeDTO); // Throws NOT_FOUND
+  rpc DeleteTimeframe (Id) returns (GenericTextMessage); // Throws NOT_FOUND
+  rpc GetSingleById (Id) returns (TimeframeDTO); // Throws NOT_FOUND
+  rpc GetAllByShiftSwitchRequestId (Id) returns (TimeframeDTOList); // Throws NOT_FOUND
+}
+
+message TimeframeDTO{
+  sint64 Id = 1;
+  sint64 ShiftSwitchRequestId = 2;
+  sint64 TimeFrameStart = 3;
+  sint64 TimeFrameEnd = 4;
+}
+
+message NewTimeframeDTO{
+  sint64 ShiftSwitchRequestId = 1;
+  sint64 TimeFrameStart = 2;
+  sint64 TimeFrameEnd = 3;
+}
+
+message TimeframeDTOList{
+  repeated TimeframeDTO dtos = 1;
+}

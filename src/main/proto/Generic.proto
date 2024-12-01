@@ -19,7 +19,7 @@ message Empty{
 }
 
 message Boolean{
-  bool result = 1;
+  bool Boolean = 1;
 }
 
 message DateTimeInMillis{

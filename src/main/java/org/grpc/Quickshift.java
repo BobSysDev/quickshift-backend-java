@@ -2,10 +2,7 @@ package org.grpc;
 
 import io.grpc.ServerBuilder;
 import io.grpc.protobuf.services.ProtoReflectionService;
-import org.grpc.service.EmployeeGrpcImpl;
-import org.grpc.service.ShiftGrpcImpl;
-import org.grpc.service.repositories.EmployeeRepository;
-import org.grpc.service.repositories.ShiftRepository;
+import org.grpc.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -23,12 +20,17 @@ public class Quickshift {
     }
 
     @Bean
-    public CommandLineRunner demo(ShiftRepository shiftRepository, EmployeeRepository employeeRepository){
+    public CommandLineRunner grpcServer(
+            ShiftGrpcImpl shiftGrpc,
+            EmployeeGrpcImpl employeeGrpc, ShiftSwitchRequestTimeframeGrpcImpl shiftSwitchRequestTimeframeGrpcImpl, ShiftSwitchRequestGrpcImpl shiftSwitchRequestGrpcImpl, ShiftSwitchReplyGrpcImpl shiftSwitchReplyGrpcImpl){
         return (args) -> {
             io.grpc.Server server = ServerBuilder
                     .forPort(serverPort)
-                    .addService(new ShiftGrpcImpl(shiftRepository, employeeRepository))
-                    .addService(new EmployeeGrpcImpl(shiftRepository, employeeRepository))
+                    .addService(shiftGrpc)
+                    .addService(employeeGrpc)
+                    .addService(shiftSwitchRequestTimeframeGrpcImpl)
+                    .addService(shiftSwitchReplyGrpcImpl)
+                    .addService(shiftSwitchRequestGrpcImpl)
                     .addService(ProtoReflectionService.newInstance())
                     .build();
             server.start();
