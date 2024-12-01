@@ -25,3 +25,8 @@ message Boolean{
 message DateTimeInMillis{
   sint64 DateTime = 1;
 }
+
+message IdBooleanPair{
+  sint64 Id = 1;
+  bool Boolean = 2;
+}
