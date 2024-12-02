@@ -4,6 +4,7 @@ import com.google.rpc.Status;
 import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import org.grpc.entities.Employee;
+import org.grpc.entities.Shift;
 import org.grpc.repositories.EmployeeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -118,6 +119,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteSingleEmployee(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (employeeRepository.findById(request.getId()) == null) {
@@ -128,6 +130,14 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+
+        Employee employeeToDelete = employeeRepository.findById(request.getId());
+
+        List<Shift> shifts = employeeToDelete.getShifts().stream().toList();
+        shifts.forEach(shift -> {
+            shift.RemoveEmployee(employeeToDelete);
+        });
+
         employeeRepository.deleteById(request.getId());
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee deleted successfully.").build());
         responseObserver.onCompleted();

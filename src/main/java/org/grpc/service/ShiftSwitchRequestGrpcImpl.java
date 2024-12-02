@@ -17,12 +17,16 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
     private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
     private final DtoConverter dtoConverter;
+    private final ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository;
+    private final ShiftSwitchReplyRepository shiftSwitchReplyRepository;
 
-    public ShiftSwitchRequestGrpcImpl(ShiftSwitchRequestRepository requestRepository, ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter) {
+    public ShiftSwitchRequestGrpcImpl(ShiftSwitchRequestRepository requestRepository, ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository, ShiftSwitchReplyRepository shiftSwitchReplyRepository) {
         this.requestRepository = requestRepository;
         this.shiftRepository = shiftRepository;
         this.employeeRepository = employeeRepository;
         this.dtoConverter = dtoConverter;
+        this.shiftSwitchRequestTimeframeRepository = shiftSwitchRequestTimeframeRepository;
+        this.shiftSwitchReplyRepository = shiftSwitchReplyRepository;
     }
 
     @Override
@@ -66,7 +70,12 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
             return;
         }
 
-        requestRepository.deleteById(request.getId());
+        ShiftSwitchRequest requestToDelete = requestRepository.findById(request.getId());
+
+        shiftSwitchRequestTimeframeRepository.deleteAllByShiftSwitchRequest(requestToDelete);
+        shiftSwitchReplyRepository.deleteAllByShiftSwitchRequest(requestToDelete);
+        requestRepository.delete(requestToDelete);
+
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Switch request deleted successfully.").build());
         responseObserver.onCompleted();
     }

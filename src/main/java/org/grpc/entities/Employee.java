@@ -29,7 +29,7 @@ public class Employee {
     private String password;
 
     @ToString.Exclude
-    @ManyToMany(mappedBy = "employees")
+    @ManyToMany(mappedBy = "employees", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Shift> shifts = new HashSet<>();
 
     public Employee(long id, String firstName, String lastName, int workingNumber, String email, String password) {
