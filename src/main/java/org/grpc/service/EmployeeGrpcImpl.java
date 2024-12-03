@@ -1,32 +1,30 @@
 package org.grpc.service;
-
 import com.google.rpc.Code;
 import com.google.rpc.Status;
 import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
-import org.grpc.service.entities.Employee;
-import org.grpc.service.entities.Shift;
-import org.grpc.service.repositories.EmployeeRepository;
-import org.grpc.service.repositories.ShiftRepository;
+import org.grpc.entities.Employee;
+import org.grpc.entities.Shift;
+import org.grpc.repositories.EmployeeRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 import quickshift.grpc.service.Boolean;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
-    private ShiftRepository shiftRepository;
-    private EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
+    private final DtoConverter dtoConverter;
 
-    public EmployeeGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository) {
+    public EmployeeGrpcImpl(EmployeeRepository employeeRepository, DtoConverter dtoConverter) {
         this.employeeRepository = employeeRepository;
-        this.shiftRepository = shiftRepository;
+        this.dtoConverter = dtoConverter;
     }
 
     @Override
+    @Transactional
     public void addSingleEmployee(NewEmployeeDTO request, StreamObserver<EmployeeDTO> responseObserver) {
         if (employeeRepository.existsEmployeeByWorkingNumber(request.getWorkingNumber())) {
             Status status = Status.newBuilder()
@@ -45,11 +43,12 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
                 request.getEmail());
 
         Employee savedEmployee = employeeRepository.save(newEmployee);
-        responseObserver.onNext(convertEmployeeToEmployeeDTO(savedEmployee, shiftRepository));
+        responseObserver.onNext(dtoConverter.convertEmployeeToEmployeeDTO(savedEmployee));
         responseObserver.onCompleted();
     }
 
     @Override
+    @Transactional
     public void getSingleEmployeeById(Id request, StreamObserver<EmployeeDTO> responseObserver) {
         Employee employee = employeeRepository.findById(request.getId());
         if (employee == null) {
@@ -60,15 +59,16 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
-        responseObserver.onNext(convertEmployeeToEmployeeDTO(employee, shiftRepository));
+        responseObserver.onNext(dtoConverter.convertEmployeeToEmployeeDTO(employee));
         responseObserver.onCompleted();
     }
 
     @Override
+    @Transactional
     public void getAllEmployees(Empty request, StreamObserver<EmployeeDTOList> responseObserver) {
         List<Employee> allEmployees = employeeRepository.findAll();
         List<EmployeeDTO> employeeDTOs = new ArrayList<>();
-        allEmployees.forEach(employee -> employeeDTOs.add(convertEmployeeToEmployeeDTO(employee, shiftRepository)));
+        allEmployees.forEach(employee -> employeeDTOs.add(dtoConverter.convertEmployeeToEmployeeDTO(employee)));
         EmployeeDTOList payload = EmployeeDTOList.newBuilder().addAllDtos(employeeDTOs).build();
 
         responseObserver.onNext(payload);
@@ -76,16 +76,18 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     }
 
     @Override
+    @Transactional
     public void getManyEmployeesByName(GenericTextMessage request, StreamObserver<EmployeeDTOList> responseObserver) {
         List<Employee> filteredEmployees = employeeRepository.findEmployeesByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(request.getText(), request.getText());
         List<EmployeeDTO> employeeDTOs = new ArrayList<>();
-        filteredEmployees.forEach(employee -> employeeDTOs.add(convertEmployeeToEmployeeDTO(employee, shiftRepository)));
+        filteredEmployees.forEach(employee -> employeeDTOs.add(dtoConverter.convertEmployeeToEmployeeDTO(employee)));
         EmployeeDTOList payload = EmployeeDTOList.newBuilder().addAllDtos(employeeDTOs).build();
         responseObserver.onNext(payload);
         responseObserver.onCompleted();
     }
 
     @Override
+    @Transactional
     public void updateSingleEmployee(UpdateEmployeeDTO request, StreamObserver<EmployeeDTO> responseObserver) {
         Employee employeeToUpdate = employeeRepository.findById(request.getId());
         if(employeeToUpdate == null){
@@ -112,11 +114,12 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
 
         Employee updatedEmployee = employeeRepository.save(employeeToUpdate);
 
-        EmployeeDTO payload = convertEmployeeToEmployeeDTO(updatedEmployee, shiftRepository);
+        EmployeeDTO payload = dtoConverter.convertEmployeeToEmployeeDTO(updatedEmployee);
         responseObserver.onNext(payload);
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteSingleEmployee(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (employeeRepository.findById(request.getId()) == null) {
@@ -127,6 +130,14 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+
+        Employee employeeToDelete = employeeRepository.findById(request.getId());
+
+        List<Shift> shifts = employeeToDelete.getShifts().stream().toList();
+        shifts.forEach(shift -> {
+            shift.RemoveEmployee(employeeToDelete);
+        });
+
         employeeRepository.deleteById(request.getId());
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee deleted successfully.").build());
         responseObserver.onCompleted();
@@ -135,14 +146,15 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     @Override
     public void isEmployeeInRepository(Id request, StreamObserver<Boolean> responseObserver) {
         if (employeeRepository.findById(request.getId()) == null) {
-            responseObserver.onNext(Boolean.newBuilder().setResult(false).build());
+            responseObserver.onNext(Boolean.newBuilder().setBoolean(false).build());
         } else {
-            responseObserver.onNext(Boolean.newBuilder().setResult(true).build());
+            responseObserver.onNext(Boolean.newBuilder().setBoolean(true).build());
         }
         responseObserver.onCompleted();
     }
 
     @Override
+    @Transactional
     public void getSingleEmployeeByWorkingNumber(WorkingNumber request, StreamObserver<EmployeeDTO> responseObserver) {
         Employee employee = employeeRepository.findByWorkingNumber(request.getWorkingNumber());
         if(employee == null){
@@ -154,58 +166,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
             return;
         }
 
-        responseObserver.onNext(convertEmployeeToEmployeeDTO(employee, shiftRepository));
+        responseObserver.onNext(dtoConverter.convertEmployeeToEmployeeDTO(employee));
         responseObserver.onCompleted();
-    }
-
-    private static EmployeeDTO convertEmployeeToEmployeeDTO(Employee employee, ShiftRepository shiftRepository) {
-        ArrayList<Shift> assignedShifts = shiftRepository.findAllByEmployeeId(employee.getId());
-        List<ShiftDTO> shiftDTOs = new ArrayList<>();
-
-        assignedShifts.forEach(shift -> shiftDTOs.add(convertShiftToShiftDTO(shift)));
-
-
-        EmployeeDTO.Builder builder = EmployeeDTO.newBuilder();
-        builder.setId(employee.getId());
-        builder.setFirstName(employee.getFirstName());
-        builder.setLastName(employee.getLastName());
-        builder.setWorkingNumber(employee.getWorkingNumber());
-        builder.setEmail(employee.getEmail());
-        builder.setPassword(employee.getPassword());
-        builder.setAssignedShifts(ShiftDTOList.newBuilder().addAllDtos(shiftDTOs).build());
-
-        return builder.build();
-    }
-
-    private static Employee convertEmployeeDTOToEmployee(EmployeeDTO employeeDTO, ShiftRepository shiftRepository) {
-        return new Employee(
-                employeeDTO.getId(),
-                employeeDTO.getFirstName(),
-                employeeDTO.getLastName(),
-                employeeDTO.getWorkingNumber(),
-                employeeDTO.getEmail(),
-                employeeDTO.getPassword()
-        );
-    }
-
-    private static ShiftDTO convertShiftToShiftDTO(Shift shift) {
-        ZoneId localTimeZone = ZoneId.systemDefault();
-        ShiftDTO.Builder builder = ShiftDTO.newBuilder();
-
-        builder.setId(shift.getId());
-        builder.setStartDateTime(shift.getStartDateTime().atZone(localTimeZone).toInstant().toEpochMilli());
-        builder.setEndDateTime(shift.getEndDateTime().atZone(localTimeZone).toInstant().toEpochMilli());
-        builder.setTypeOfShift(shift.getTypeOfShift());
-        builder.setShiftStatus(shift.getShiftStatus());
-        builder.setDescription(shift.getDescription());
-        builder.setLocation(shift.getLocation());
-
-        return builder.build();
-    }
-
-    private static LocalDateTime convertEpochMillisToLDT(long epochMillis) {
-        Instant instant = Instant.ofEpochMilli(epochMillis);
-        ZoneId localTimeZone = ZoneId.systemDefault();
-        return instant.atZone(localTimeZone).toLocalDateTime();
     }
 }

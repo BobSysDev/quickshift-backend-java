@@ -18,7 +18,7 @@ service Shift{
   rpc DeleteSingleShift (Id) returns (GenericTextMessage); //Throws NOT_FOUND if shift with was this ID not found
   rpc IsShiftInRepository (Id) returns (Boolean);
   rpc AssignEmployeeToShift (ShiftEmployeePair) returns (GenericTextMessage); // Throws NOT_FOUND if employee or shift with the given IDs were not found
-  rpc UnAssignEmployeeFromShift (Id) returns (GenericTextMessage); // Throws NOT_FOUND if shift with this ID was not found
+  rpc UnAssignEmployeeFromShift (ShiftEmployeePair) returns (GenericTextMessage); // Throws NOT_FOUND if shift with this ID was not found
 }
 
 message ShiftDTO {
@@ -29,7 +29,7 @@ message ShiftDTO {
   string ShiftStatus = 5;
   string Description = 6;
   string Location = 7;
-  sint64 AssignedEmployeeId = 8;
+  repeated sint64 AssignedEmployeeIds = 8;
 }
 
 message NewShiftDTO {
