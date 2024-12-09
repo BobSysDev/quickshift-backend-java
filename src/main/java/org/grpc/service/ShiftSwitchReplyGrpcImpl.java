@@ -176,7 +176,10 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
         }
 
         reply.setOriginAccepted(request.getBoolean());
+        replyRepository.save(reply);
+
         responseObserver.onNext(Boolean.newBuilder().setBoolean(reply.isOriginAccepted()).build());
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -192,6 +195,9 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
         }
 
         reply.setTargetAccepted(request.getBoolean());
+        replyRepository.save(reply);
+
         responseObserver.onNext(Boolean.newBuilder().setBoolean(reply.isTargetAccepted()).build());
+        responseObserver.onCompleted();
     }
 }

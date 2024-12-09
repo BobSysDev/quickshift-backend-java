@@ -11,4 +11,5 @@ public interface ShiftSwitchRequestTimeframeRepository extends CrudRepository<Sh
     ShiftSwitchRequestTimeframe findById(long id);
     List<ShiftSwitchRequestTimeframe> findAllByShiftSwitchRequestId(long id);
     List<ShiftSwitchRequestTimeframe> findAllByShiftSwitchRequest(ShiftSwitchRequest request);
+    void deleteAllByShiftSwitchRequest(ShiftSwitchRequest request);
 }

@@ -13,4 +13,6 @@ public interface ShiftSwitchReplyRepository extends CrudRepository<ShiftSwitchRe
     ArrayList<ShiftSwitchReply> findAllByShiftSwitchRequest(ShiftSwitchRequest request);
     ArrayList<ShiftSwitchReply> findAllByTargetEmployeeId(long id);
     void deleteAllByShiftSwitchRequest(ShiftSwitchRequest request);
+    void deleteAllByTargetEmployeeId(long id);
+    void deleteAllByTargetShiftId(long id);
 }
