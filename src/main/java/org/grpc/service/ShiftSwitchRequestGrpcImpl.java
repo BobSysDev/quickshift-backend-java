@@ -69,7 +69,7 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
 
     @Override
     public void deleteRequest(Id request, StreamObserver<GenericTextMessage> responseObserver) {
-        if (requestRepository.existsById(request.getId())) {
+        if (!requestRepository.existsById(request.getId())) {
             Status status = Status.newBuilder()
                     .setCode(Code.NOT_FOUND_VALUE)
                     .setMessage("The switch request not found")

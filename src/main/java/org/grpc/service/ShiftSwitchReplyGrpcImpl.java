@@ -155,8 +155,6 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
             return;
         }
 
-//        List<ShiftSwitchReply> repliesByEmployee = replyRepository.findAll().stream().filter(reply -> reply.getTargetEmployee().getShifts().contains(employee)).toList();
-//        This ^^^ (if it worked) can be substituted by one simple call to the Repository vvv :> [TODO: DELETE THE COMMENT AFTER VIEWING IT]
         List<ShiftSwitchReply> repliesByEmployee = replyRepository.findAllByTargetEmployeeId(request.getId());
         List<ReplyDTO> replyDTOS = repliesByEmployee.stream().map(dtoConverter::convertReplyToReplyDTO).toList();
         responseObserver.onNext(ReplyDTOList.newBuilder().addAllDtos(replyDTOS).build());
