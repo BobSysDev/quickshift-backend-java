@@ -55,6 +55,14 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
                 shift, employee, request.getDetails());
         ShiftSwitchRequest addedRequest = requestRepository.save(switchRequest);
 
+        List<TimeframeDTO> timeframeDTOS = request.getTimeframes().getDtosList().stream().toList();
+        timeframeDTOS.forEach(timeframeDTO -> shiftSwitchRequestTimeframeRepository.save(
+                new ShiftSwitchRequestTimeframe(
+                    switchRequest,
+                    dtoConverter.convertEpochMillisToLDT(timeframeDTO.getTimeFrameStart()),
+                    dtoConverter.convertEpochMillisToLDT(timeframeDTO.getTimeFrameEnd())
+        )));
+
         responseObserver.onNext(dtoConverter.convertRequestToRequestDTO(addedRequest));
         responseObserver.onCompleted();
     }
@@ -123,7 +131,7 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
 
     @Override
     public void getRequestsByOriginEmployeeId(Id request, StreamObserver<RequestDTOList> responseObserver) {
-        if (employeeRepository.existsById(request.getId())) {
+        if (!employeeRepository.existsById(request.getId())) {
             Status status = Status.newBuilder()
                     .setCode(Code.NOT_FOUND_VALUE)
                     .setMessage("The employee with this Id not found")
@@ -140,7 +148,7 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
 
     @Override
     public void getRequestsByOriginShiftId(Id request, StreamObserver<RequestDTOList> responseObserver) {
-        if (shiftRepository.existsById(request.getId())) {
+        if (!shiftRepository.existsById(request.getId())) {
             Status status = Status.newBuilder()
                     .setCode(Code.NOT_FOUND_VALUE)
                     .setMessage("The shift with this id not found")

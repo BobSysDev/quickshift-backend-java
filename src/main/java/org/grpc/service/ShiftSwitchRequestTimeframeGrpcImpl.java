@@ -97,5 +97,6 @@ public class ShiftSwitchRequestTimeframeGrpcImpl extends ShiftSwitchRequestTimef
         timeframes.forEach(t -> timeframeDTOS.add(dtoConverter.convertTimeframeToDTO(t)));
 
         responseObserver.onNext(TimeframeDTOList.newBuilder().addAllDtos(timeframeDTOS).build());
+        responseObserver.onCompleted();
     }
 }

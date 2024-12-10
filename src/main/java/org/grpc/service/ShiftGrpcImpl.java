@@ -9,11 +9,13 @@ import org.grpc.entities.Shift;
 import org.grpc.entities.ShiftSwitchRequest;
 import org.grpc.repositories.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 import quickshift.grpc.service.Boolean;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
@@ -24,11 +26,11 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     private final ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository;
     private final ShiftSwitchRequestRepository shiftSwitchRequestRepository;
 
-    public ShiftGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchReplyRepository shiftSwitchReplyRepository1, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository, ShiftSwitchRequestRepository shiftSwitchRequestRepository) {
+    public ShiftGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository, ShiftSwitchRequestRepository shiftSwitchRequestRepository) {
         this.employeeRepository = employeeRepository;
         this.shiftRepository = shiftRepository;
         this.dtoConverter = dtoConverter;
-        this.shiftSwitchReplyRepository = shiftSwitchReplyRepository1;
+        this.shiftSwitchReplyRepository = shiftSwitchReplyRepository;
         this.shiftSwitchRequestTimeframeRepository = shiftSwitchRequestTimeframeRepository;
         this.shiftSwitchRequestRepository = shiftSwitchRequestRepository;
     }
@@ -137,6 +139,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteSingleShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (shiftRepository.findById(request.getId()) == null) {
@@ -190,6 +193,16 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+        Set<Employee> shiftEmployees = shift.getEmployees();
+        if(shiftEmployees.contains(employee)){
+            Status status = Status.newBuilder()
+                    .setCode(Code.ALREADY_EXISTS_VALUE)
+                    .setMessage("This shift is already assigned for this employee")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         shift.AddEmployee(employee);
         shiftRepository.save(shift);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee assigned successfully.").build());
@@ -216,6 +229,16 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+        Set<Employee> shiftEmployees = shift.getEmployees();
+        if(!shiftEmployees.contains(employee)){
+            Status status = Status.newBuilder()
+                    .setCode(Code.FAILED_PRECONDITION_VALUE)
+                    .setMessage("This shift is not assigned for this employee")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         shift.RemoveEmployee(employee);
         shiftRepository.save(shift);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee un-assigned successfully.").build());
