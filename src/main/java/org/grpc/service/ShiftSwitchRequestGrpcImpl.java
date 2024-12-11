@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 import org.grpc.entities.*;
 import org.grpc.repositories.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 
 import java.util.List;
@@ -67,6 +68,7 @@ public class ShiftSwitchRequestGrpcImpl extends ShiftSwitchRequestGrpc.ShiftSwit
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteRequest(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (!requestRepository.existsById(request.getId())) {

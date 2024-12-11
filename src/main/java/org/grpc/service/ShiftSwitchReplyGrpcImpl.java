@@ -13,6 +13,7 @@ import org.grpc.repositories.ShiftRepository;
 import org.grpc.repositories.ShiftSwitchReplyRepository;
 import org.grpc.repositories.ShiftSwitchRequestRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 import quickshift.grpc.service.Boolean;
 
@@ -81,6 +82,7 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
 
     }
 
+    @Transactional
     @Override
     public void deleteReply(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (!replyRepository.existsById(request.getId())) {
