@@ -22,7 +22,7 @@ public class Quickshift {
     @Bean
     public CommandLineRunner grpcServer(
             ShiftGrpcImpl shiftGrpc,
-            EmployeeGrpcImpl employeeGrpc, ShiftSwitchRequestTimeframeGrpcImpl shiftSwitchRequestTimeframeGrpcImpl, ShiftSwitchRequestGrpcImpl shiftSwitchRequestGrpcImpl, ShiftSwitchReplyGrpcImpl shiftSwitchReplyGrpcImpl){
+            EmployeeGrpcImpl employeeGrpc, ShiftSwitchRequestTimeframeGrpcImpl shiftSwitchRequestTimeframeGrpcImpl, ShiftSwitchRequestGrpcImpl shiftSwitchRequestGrpcImpl, ShiftSwitchReplyGrpcImpl shiftSwitchReplyGrpcImpl) {
         return (args) -> {
             io.grpc.Server server = ServerBuilder
                     .forPort(serverPort)
@@ -35,7 +35,7 @@ public class Quickshift {
                     .build();
             server.start();
             log.info("Server running on port " + serverPort);
-            log.info("Full server address: gprc://localhost:" + serverPort);
+            log.info("Full server address: http://localhost:" + serverPort);
             server.awaitTermination();
         };
     }

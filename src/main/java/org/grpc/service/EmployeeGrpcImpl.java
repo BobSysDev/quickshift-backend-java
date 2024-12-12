@@ -50,7 +50,8 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
                 request.getLastName(),
                 request.getWorkingNumber(),
                 request.getPassword(),
-                request.getEmail());
+                request.getEmail(),
+                request.getIsManager());
 
         Employee savedEmployee = employeeRepository.save(newEmployee);
         responseObserver.onNext(dtoConverter.convertEmployeeToEmployeeDTO(savedEmployee));
@@ -121,6 +122,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         employeeToUpdate.setWorkingNumber(request.getWorkingNumber());
         employeeToUpdate.setEmail(request.getEmail());
         employeeToUpdate.setPassword(request.getPassword());
+        employeeToUpdate.setManager(request.getIsManager());
 
         Employee updatedEmployee = employeeRepository.save(employeeToUpdate);
 
@@ -144,9 +146,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         Employee employeeToDelete = employeeRepository.findById(request.getId());
 
         List<Shift> shifts = employeeToDelete.getShifts().stream().toList();
-        shifts.forEach(shift -> {
-            shift.RemoveEmployee(employeeToDelete);
-        });
+        shifts.forEach(shift -> shift.RemoveEmployee(employeeToDelete));
 
 
         shiftSwitchReplyRepository.deleteAllByTargetEmployeeId(employeeToDelete.getId());

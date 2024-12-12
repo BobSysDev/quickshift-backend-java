@@ -36,6 +36,7 @@ public class DtoConverter {
         builder.setWorkingNumber(employee.getWorkingNumber());
         builder.setEmail(employee.getEmail());
         builder.setPassword(employee.getPassword());
+        builder.setIsManager(employee.isManager());
         builder.setAssignedShifts(ShiftDTOList.newBuilder().addAllDtos(shiftDTOs).build());
 
         return builder.build();
