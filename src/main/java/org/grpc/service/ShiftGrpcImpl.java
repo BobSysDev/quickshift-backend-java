@@ -6,25 +6,33 @@ import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import org.grpc.entities.Employee;
 import org.grpc.entities.Shift;
-import org.grpc.repositories.EmployeeRepository;
-import org.grpc.repositories.ShiftRepository;
+import org.grpc.entities.ShiftSwitchRequest;
+import org.grpc.repositories.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 import quickshift.grpc.service.Boolean;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
     private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
     private final DtoConverter dtoConverter;
+    private final ShiftSwitchReplyRepository shiftSwitchReplyRepository;
+    private final ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository;
+    private final ShiftSwitchRequestRepository shiftSwitchRequestRepository;
 
-    public ShiftGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter) {
+    public ShiftGrpcImpl(ShiftRepository shiftRepository, EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository, ShiftSwitchRequestRepository shiftSwitchRequestRepository) {
         this.employeeRepository = employeeRepository;
         this.shiftRepository = shiftRepository;
         this.dtoConverter = dtoConverter;
+        this.shiftSwitchReplyRepository = shiftSwitchReplyRepository;
+        this.shiftSwitchRequestTimeframeRepository = shiftSwitchRequestTimeframeRepository;
+        this.shiftSwitchRequestRepository = shiftSwitchRequestRepository;
     }
 
     @Override
@@ -131,6 +139,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteSingleShift(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (shiftRepository.findById(request.getId()) == null) {
@@ -142,6 +151,12 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             return;
         }
         Shift toDelete = shiftRepository.findById(request.getId());
+
+        shiftSwitchReplyRepository.deleteAllByTargetShiftId(toDelete.getId());
+        List<ShiftSwitchRequest> requests = shiftSwitchRequestRepository.getAllByOriginShiftId(toDelete.getId());
+        requests.forEach(shiftSwitchRequestTimeframeRepository::deleteAllByShiftSwitchRequest);
+        shiftSwitchRequestRepository.deleteAllByOriginShiftId(toDelete.getId());
+
         shiftRepository.delete(toDelete);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Shift deleted successfully.").build());
         responseObserver.onCompleted();
@@ -178,6 +193,16 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+        Set<Employee> shiftEmployees = shift.getEmployees();
+        if(shiftEmployees.contains(employee)){
+            Status status = Status.newBuilder()
+                    .setCode(Code.ALREADY_EXISTS_VALUE)
+                    .setMessage("This shift is already assigned for this employee")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         shift.AddEmployee(employee);
         shiftRepository.save(shift);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee assigned successfully.").build());
@@ -204,6 +229,16 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
+        Set<Employee> shiftEmployees = shift.getEmployees();
+        if(!shiftEmployees.contains(employee)){
+            Status status = Status.newBuilder()
+                    .setCode(Code.FAILED_PRECONDITION_VALUE)
+                    .setMessage("This shift is not assigned for this employee")
+                    .build();
+            responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+            return;
+        }
+
         shift.RemoveEmployee(employee);
         shiftRepository.save(shift);
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee un-assigned successfully.").build());

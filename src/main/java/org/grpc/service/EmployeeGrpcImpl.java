@@ -5,7 +5,11 @@ import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
 import org.grpc.entities.Employee;
 import org.grpc.entities.Shift;
+import org.grpc.entities.ShiftSwitchRequest;
 import org.grpc.repositories.EmployeeRepository;
+import org.grpc.repositories.ShiftSwitchReplyRepository;
+import org.grpc.repositories.ShiftSwitchRequestRepository;
+import org.grpc.repositories.ShiftSwitchRequestTimeframeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
@@ -17,10 +21,16 @@ import java.util.List;
 public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     private final EmployeeRepository employeeRepository;
     private final DtoConverter dtoConverter;
+    private final ShiftSwitchRequestRepository shiftSwitchRequestRepository;
+    private final ShiftSwitchReplyRepository shiftSwitchReplyRepository;
+    private final ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository;
 
-    public EmployeeGrpcImpl(EmployeeRepository employeeRepository, DtoConverter dtoConverter) {
+    public EmployeeGrpcImpl(EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchRequestRepository shiftSwitchRequestRepository, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository) {
         this.employeeRepository = employeeRepository;
         this.dtoConverter = dtoConverter;
+        this.shiftSwitchRequestRepository = shiftSwitchRequestRepository;
+        this.shiftSwitchReplyRepository = shiftSwitchReplyRepository;
+        this.shiftSwitchRequestTimeframeRepository = shiftSwitchRequestTimeframeRepository;
     }
 
     @Override
@@ -137,6 +147,13 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         shifts.forEach(shift -> {
             shift.RemoveEmployee(employeeToDelete);
         });
+
+
+        shiftSwitchReplyRepository.deleteAllByTargetEmployeeId(employeeToDelete.getId());
+        List<ShiftSwitchRequest> shiftSwitchRequests = shiftSwitchRequestRepository.getAllByOriginEmployeeId(employeeToDelete.getId());
+        shiftSwitchRequests.forEach(shiftSwitchRequestTimeframeRepository::deleteAllByShiftSwitchRequest);
+        shiftSwitchRequestRepository.deleteAllByOriginEmployeeId(employeeToDelete.getId());
+
 
         employeeRepository.deleteById(request.getId());
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee deleted successfully.").build());

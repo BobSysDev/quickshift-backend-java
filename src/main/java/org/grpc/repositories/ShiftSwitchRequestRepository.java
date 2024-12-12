@@ -11,4 +11,6 @@ public interface ShiftSwitchRequestRepository extends CrudRepository<ShiftSwitch
     List<ShiftSwitchRequest> findAll();
     List<ShiftSwitchRequest> getAllByOriginEmployeeId(long id);
     List<ShiftSwitchRequest> getAllByOriginShiftId(long id);
+    void deleteAllByOriginEmployeeId(long id);
+    void deleteAllByOriginShiftId(long id);
 }

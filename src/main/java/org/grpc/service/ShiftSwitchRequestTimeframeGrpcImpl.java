@@ -8,6 +8,7 @@ import org.grpc.entities.ShiftSwitchRequestTimeframe;
 import org.grpc.repositories.ShiftSwitchRequestRepository;
 import org.grpc.repositories.ShiftSwitchRequestTimeframeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class ShiftSwitchRequestTimeframeGrpcImpl extends ShiftSwitchRequestTimef
         responseObserver.onCompleted();
     }
 
+    @Transactional
     @Override
     public void deleteTimeframe(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if(!timeframeRepository.existsById(request.getId())){
@@ -97,5 +99,6 @@ public class ShiftSwitchRequestTimeframeGrpcImpl extends ShiftSwitchRequestTimef
         timeframes.forEach(t -> timeframeDTOS.add(dtoConverter.convertTimeframeToDTO(t)));
 
         responseObserver.onNext(TimeframeDTOList.newBuilder().addAllDtos(timeframeDTOS).build());
+        responseObserver.onCompleted();
     }
 }

@@ -13,6 +13,7 @@ import org.grpc.repositories.ShiftRepository;
 import org.grpc.repositories.ShiftSwitchReplyRepository;
 import org.grpc.repositories.ShiftSwitchRequestRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
 import quickshift.grpc.service.Boolean;
 
@@ -81,6 +82,7 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
 
     }
 
+    @Transactional
     @Override
     public void deleteReply(Id request, StreamObserver<GenericTextMessage> responseObserver) {
         if (!replyRepository.existsById(request.getId())) {
@@ -155,8 +157,6 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
             return;
         }
 
-//        List<ShiftSwitchReply> repliesByEmployee = replyRepository.findAll().stream().filter(reply -> reply.getTargetEmployee().getShifts().contains(employee)).toList();
-//        This ^^^ (if it worked) can be substituted by one simple call to the Repository vvv :> [TODO: DELETE THE COMMENT AFTER VIEWING IT]
         List<ShiftSwitchReply> repliesByEmployee = replyRepository.findAllByTargetEmployeeId(request.getId());
         List<ReplyDTO> replyDTOS = repliesByEmployee.stream().map(dtoConverter::convertReplyToReplyDTO).toList();
         responseObserver.onNext(ReplyDTOList.newBuilder().addAllDtos(replyDTOS).build());
@@ -176,7 +176,10 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
         }
 
         reply.setOriginAccepted(request.getBoolean());
+        replyRepository.save(reply);
+
         responseObserver.onNext(Boolean.newBuilder().setBoolean(reply.isOriginAccepted()).build());
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -192,6 +195,9 @@ public class ShiftSwitchReplyGrpcImpl extends ShiftSwitchReplyGrpc.ShiftSwitchRe
         }
 
         reply.setTargetAccepted(request.getBoolean());
+        replyRepository.save(reply);
+
         responseObserver.onNext(Boolean.newBuilder().setBoolean(reply.isTargetAccepted()).build());
+        responseObserver.onCompleted();
     }
 }

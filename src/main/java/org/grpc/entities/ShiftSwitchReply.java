@@ -22,11 +22,11 @@ public class ShiftSwitchReply {
     @JoinColumn(name = "shiftSwitchRequest_id")
     private ShiftSwitchRequest shiftSwitchRequest;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "targetEmployee_id")
     private Employee targetEmployee;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "targetShift_id")
     private Shift targetShift;
 

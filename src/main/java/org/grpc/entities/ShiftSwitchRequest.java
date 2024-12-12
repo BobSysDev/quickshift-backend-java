@@ -17,11 +17,11 @@ public class ShiftSwitchRequest {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "originShift_id")
     private Shift originShift;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "originEmployee_id")
     private Employee originEmployee;
 
