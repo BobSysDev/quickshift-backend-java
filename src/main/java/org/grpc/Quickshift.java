@@ -22,7 +22,7 @@ public class Quickshift {
     @Bean
     public CommandLineRunner grpcServer(
             ShiftGrpcImpl shiftGrpc,
-            EmployeeGrpcImpl employeeGrpc, ShiftSwitchRequestTimeframeGrpcImpl shiftSwitchRequestTimeframeGrpcImpl, ShiftSwitchRequestGrpcImpl shiftSwitchRequestGrpcImpl, ShiftSwitchReplyGrpcImpl shiftSwitchReplyGrpcImpl) {
+            EmployeeGrpcImpl employeeGrpc, ShiftSwitchRequestTimeframeGrpcImpl shiftSwitchRequestTimeframeGrpcImpl, ShiftSwitchRequestGrpcImpl shiftSwitchRequestGrpcImpl, ShiftSwitchReplyGrpcImpl shiftSwitchReplyGrpcImpl, AnnouncementGrpcImpl announcementGrpcImpl) {
         return (args) -> {
             io.grpc.Server server = ServerBuilder
                     .forPort(serverPort)
@@ -31,6 +31,7 @@ public class Quickshift {
                     .addService(shiftSwitchRequestTimeframeGrpcImpl)
                     .addService(shiftSwitchReplyGrpcImpl)
                     .addService(shiftSwitchRequestGrpcImpl)
+                    .addService(announcementGrpcImpl)
                     .addService(ProtoReflectionService.newInstance())
                     .build();
             server.start();

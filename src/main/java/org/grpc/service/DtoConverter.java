@@ -99,6 +99,19 @@ public class DtoConverter {
                 .build();
     }
 
+    @Transactional
+    AnnouncementDTO convertAnnouncementToAnnouncementDTO(Announcement announcement){
+        ZoneId localTimeZone = ZoneId.systemDefault();
+
+        return AnnouncementDTO.newBuilder()
+                .setId(announcement.getId())
+                .setAuthorEmployeeId(announcement.getAuthor().getId())
+                .setTitle(announcement.getTitle())
+                .setBody(announcement.getBody())
+                .setDateTimeOfPosting(announcement.getDateTimeOfPosting().atZone(localTimeZone).toInstant().toEpochMilli())
+                .build();
+    }
+
     LocalDateTime convertEpochMillisToLDT(long epochMillis) {
         Instant instant = Instant.ofEpochMilli(epochMillis);
         ZoneId localTimeZone = ZoneId.systemDefault();

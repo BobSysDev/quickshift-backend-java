@@ -6,10 +6,7 @@ import io.grpc.stub.StreamObserver;
 import org.grpc.entities.Employee;
 import org.grpc.entities.Shift;
 import org.grpc.entities.ShiftSwitchRequest;
-import org.grpc.repositories.EmployeeRepository;
-import org.grpc.repositories.ShiftSwitchReplyRepository;
-import org.grpc.repositories.ShiftSwitchRequestRepository;
-import org.grpc.repositories.ShiftSwitchRequestTimeframeRepository;
+import org.grpc.repositories.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import quickshift.grpc.service.*;
@@ -24,13 +21,15 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
     private final ShiftSwitchRequestRepository shiftSwitchRequestRepository;
     private final ShiftSwitchReplyRepository shiftSwitchReplyRepository;
     private final ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository;
+    private final AnnouncementRepository announcementRepository;
 
-    public EmployeeGrpcImpl(EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchRequestRepository shiftSwitchRequestRepository, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository) {
+    public EmployeeGrpcImpl(EmployeeRepository employeeRepository, DtoConverter dtoConverter, ShiftSwitchRequestRepository shiftSwitchRequestRepository, ShiftSwitchReplyRepository shiftSwitchReplyRepository, ShiftSwitchRequestTimeframeRepository shiftSwitchRequestTimeframeRepository, AnnouncementRepository announcementRepository) {
         this.employeeRepository = employeeRepository;
         this.dtoConverter = dtoConverter;
         this.shiftSwitchRequestRepository = shiftSwitchRequestRepository;
         this.shiftSwitchReplyRepository = shiftSwitchReplyRepository;
         this.shiftSwitchRequestTimeframeRepository = shiftSwitchRequestTimeframeRepository;
+        this.announcementRepository = announcementRepository;
     }
 
     @Override
@@ -154,6 +153,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
         shiftSwitchRequests.forEach(shiftSwitchRequestTimeframeRepository::deleteAllByShiftSwitchRequest);
         shiftSwitchRequestRepository.deleteAllByOriginEmployeeId(employeeToDelete.getId());
 
+        announcementRepository.deleteByAuthor(employeeToDelete);
 
         employeeRepository.deleteById(request.getId());
         responseObserver.onNext(GenericTextMessage.newBuilder().setText("Employee deleted successfully.").build());
