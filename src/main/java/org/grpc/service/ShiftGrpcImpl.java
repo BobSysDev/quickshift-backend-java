@@ -184,7 +184,7 @@ public class ShiftGrpcImpl extends ShiftGrpc.ShiftImplBase {
                     .build();
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
-        }
+        } // Error handling
         if(shift == null){
             Status status = Status.newBuilder()
                     .setCode(Code.NOT_FOUND_VALUE)

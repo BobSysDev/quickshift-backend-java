@@ -27,6 +27,7 @@ public class Employee {
     private int workingNumber;
     private String email;
     private String password;
+    private boolean isManager;
 
     @ToString.Exclude
     @ManyToMany(mappedBy = "employees", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -42,13 +43,14 @@ public class Employee {
         shifts = new HashSet<>();
     }
 
-    public Employee(String firstName, String lastName, int workingNumber, String password, String email) {
+    public Employee(String firstName, String lastName, int workingNumber, String password, String email, boolean isManager) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.workingNumber = workingNumber;
         this.email = email;
         this.password = password;
         shifts = new HashSet<>();
+        this.isManager = isManager;
     }
 
     public Employee(long id, String firstName, String lastName, int workingNumber, String email, String password, Set<Shift> shifts) {

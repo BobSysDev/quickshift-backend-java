@@ -28,6 +28,7 @@ message EmployeeDTO {
   string Email = 5;
   string Password = 6;
   ShiftDTOList AssignedShifts = 7;
+  bool isManager = 8;
 }
 
 message NewEmployeeDTO {
@@ -36,6 +37,7 @@ message NewEmployeeDTO {
   uint32 WorkingNumber = 3;
   string Email = 4;
   string Password = 5;
+  bool isManager = 6;
 }
 
 message UpdateEmployeeDTO {
@@ -45,6 +47,7 @@ message UpdateEmployeeDTO {
   uint32 WorkingNumber = 4;
   string Email = 5;
   string Password = 6;
+  bool isManager = 7;
 }
 
 message EmployeeDTOList {
