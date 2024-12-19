@@ -86,9 +86,7 @@ public class DtoConverter {
 
     RequestDTO convertRequestToRequestDTO(ShiftSwitchRequest request){
         List<ReplyDTO> replyDTOS = shiftSwitchReplyRepository.findAllByShiftSwitchRequest(request).stream().map(this::convertReplyToReplyDTO).toList();
-        System.out.println(replyDTOS);
         List<TimeframeDTO> timeframeDTOS = shiftSwitchRequestTimeframeRepository.findAllByShiftSwitchRequest(request).stream().map(this::convertTimeframeToDTO).toList();
-        System.out.println(timeframeDTOS);
         return RequestDTO.newBuilder()
                 .setId(request.getId())
                 .setOriginShiftId(request.getOriginShift().getId())

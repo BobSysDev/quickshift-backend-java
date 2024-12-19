@@ -43,7 +43,7 @@ public class EmployeeGrpcImpl extends EmployeeGrpc.EmployeeImplBase {
             responseObserver.onError(StatusProto.toStatusRuntimeException(status));
             return;
         }
-
+        
         Employee newEmployee = new Employee(
                 request.getFirstName(),
                 request.getLastName(),
