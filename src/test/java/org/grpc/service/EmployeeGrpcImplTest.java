@@ -1,7 +1,7 @@
 package org.grpc.service;
 import io.grpc.stub.StreamObserver;
 import org.grpc.entities.Employee;
-import org.grpc.repositories.EmployeeRepository;
+import org.grpc.repositories.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,10 +17,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {EmployeeGrpcImpl.class, EmployeeRepository.class, DtoConverter.class})
+@ContextConfiguration(classes = {EmployeeGrpcImpl.class, EmployeeRepository.class, DtoConverter.class, ShiftSwitchReplyRepository.class, ShiftSwitchRequestTimeframeRepository.class, ShiftSwitchRequestRepository.class, AnnouncementRepository.class})
 class EmployeeGrpcImplTest {
     @MockBean
     EmployeeRepository employeeRepository;
+    @MockBean
+    ShiftSwitchReplyRepository replyRepository;
+    @MockBean
+    ShiftSwitchRequestTimeframeRepository timeframeRepository;
+    @MockBean
+    ShiftSwitchRequestRepository requestRepository;
+    @MockBean
+    AnnouncementRepository announcementRepository;
     @Autowired
     EmployeeGrpcImpl employeeGrpc;
     @BeforeEach
