@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcClient";
+option java_multiple_files = true;
+option java_package = "quickshift.grpc.service";
+
+package org.grpc.service;
+
+import "Generic.proto";
+
+service Announcement{
+  rpc AddSingleAnnouncement (NewAnnouncementDTO) returns (AnnouncementDTO);
+  rpc UpdateSingleAnnouncement (AnnouncementDTO) returns (AnnouncementDTO);
+  rpc GetAllAnnouncements (Empty) returns (AnnouncementDTOList);
+  rpc GetSingleAnnouncementById (Id) returns (AnnouncementDTO);
+  rpc GetMostRecentAnnouncements (GenericInteger) returns (AnnouncementDTOList);
+  rpc DeleteSingleAnnouncement (Id) returns (GenericTextMessage);
+}
+
+message AnnouncementDTO{
+  sint64 Id = 1;
+  sint64 AuthorEmployeeId = 2;
+  string title = 3;
+  string body = 4;
+  sint64 DateTimeOfPosting = 5;
+}
+
+message NewAnnouncementDTO{
+  sint64 AuthorEmployeeId = 1;
+  string title = 2;
+  string body = 3;
+  sint64 DateTimeOfPosting = 4;
+}
+
+message AnnouncementDTOList{
+  repeated AnnouncementDTO announcements = 1;
+}

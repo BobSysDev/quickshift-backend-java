@@ -10,6 +10,10 @@ message Id {
   sint64 Id = 1;
 }
 
+message GenericInteger{
+  sint32 number = 1;
+}
+
 message GenericTextMessage {
   string Text = 1;
 }
