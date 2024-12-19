@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcClient";
+option java_multiple_files = true;
+option java_package = "quickshift.grpc.service";
+
+package org.grpc.service;
+
+message Id {
+  sint64 Id = 1;
+}
+
+message GenericInteger{
+  sint32 number = 1;
+}
+
+message GenericTextMessage {
+  string Text = 1;
+}
+
+message Empty{
+
+}
+
+message Boolean{
+  bool Boolean = 1;
+}
+
+message DateTimeInMillis{
+  sint64 DateTime = 1;
+}
+
+message IdBooleanPair{
+  sint64 Id = 1;
+  bool Boolean = 2;
+}
